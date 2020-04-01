@@ -14,7 +14,7 @@ class TorrentCell: ThemedUITableViewCell {
     @IBOutlet var status: UILabel!
     @IBOutlet var progress: UIProgressView!
 
-    var manager: TorrentStatus!
+    var manager: TorrentModel!
 
     override func themeUpdate() {
         super.themeUpdate()
@@ -36,16 +36,16 @@ class TorrentCell: ThemedUITableViewCell {
             " \(NSLocalizedString("of", comment: "")) " +
             Utils.getSizeText(size: manager.totalWanted) +
             " (" + String(format: "%.2f", manager.progress * 100) + "%)"
-        if manager.displayState == Utils.TorrentStates.downloading.rawValue {
-            status.text = NSLocalizedString(manager.displayState, comment: "") +
+        if manager.displayState == .downloading {
+            status.text = NSLocalizedString(manager.displayState.rawValue, comment: "") +
                 " - DL:" + Utils.getSizeText(size: Int64(manager.downloadRate)) +
                 "/s - \(NSLocalizedString("time remains", comment: "")): " +
                 Utils.downloadingTimeRemainText(speedInBytes: Int64(manager.downloadRate), fileSize: manager.totalWanted, downloadedSize: manager.totalWantedDone)
-        } else if manager.displayState == Utils.TorrentStates.seeding.rawValue {
-            status.text = NSLocalizedString(manager.displayState, comment: "") +
+        } else if manager.displayState == .seeding {
+            status.text = NSLocalizedString(manager.displayState.rawValue, comment: "") +
                 " - UL:" + Utils.getSizeText(size: Int64(manager.uploadRate)) + "/s"
         } else {
-            status.text = NSLocalizedString(manager.displayState, comment: "")
+            status.text = NSLocalizedString(manager.displayState.rawValue, comment: "")
         }
     }
 }

@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ThemedUIViewController: UIViewController, Themed {
+class ThemedUIViewController: SAViewController, Themed {
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }

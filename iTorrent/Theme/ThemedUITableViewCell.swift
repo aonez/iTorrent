@@ -64,6 +64,10 @@ class ThemedUITableViewCell: UITableViewCell, Themed {
 
         textLabel?.textColor = theme.mainText
         backgroundColor = theme.backgroundMain
+        
+        let bgColorView = UIView()
+        bgColorView.backgroundColor = theme.backgroundSecondary
+        selectedBackgroundView = bgColorView
     }
 
     func setInsetParams(tableView: UITableView, indexPath: IndexPath) {

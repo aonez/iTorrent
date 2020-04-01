@@ -25,7 +25,7 @@ class MainController: ThemedUIViewController {
 
     var searchController: UISearchController = UISearchController(searchResultsController: nil)
 
-    var managers: [[TorrentStatus]] = []
+    var managers: [[TorrentModel]] = []
     var headers: [String] = []
 
     var filterQuery: String?
@@ -115,7 +115,7 @@ class MainController: ThemedUIViewController {
         super.viewWillAppear(animated)
 
         managers.removeAll()
-        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Manager.torrentStates, headers: &headers))
+        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Array(Core.shared.torrents.values), headers: &headers))
         updateFilterQuery()
         tableView.reloadData()
 
@@ -153,7 +153,7 @@ class MainController: ThemedUIViewController {
         var changed = false
         let oldManagers = managers
         managers.removeAll()
-        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Manager.torrentStates, headers: &headers))
+        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Array(Core.shared.torrents.values), headers: &headers))
         updateFilterQuery()
         if oldManagers.count != managers.count {
             changed = true
@@ -170,7 +170,7 @@ class MainController: ThemedUIViewController {
         } else {
             for cell in tableView.visibleCells {
                 if let cell = cell as? TorrentCell,
-                    let manager = Manager.getManagerByHash(hash: cell.manager.hash) {
+                    let manager = Core.shared.torrents[cell.manager.hash] {
                     cell.manager = manager
                     cell.update()
                 }
@@ -180,7 +180,7 @@ class MainController: ThemedUIViewController {
 
     @objc func managerStateChanged(notfication: NSNotification) {
         managers.removeAll()
-        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Manager.torrentStates, headers: &headers))
+        managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Array(Core.shared.torrents.values), headers: &headers))
         updateFilterQuery()
         tableView.reloadData()
     }
@@ -195,11 +195,11 @@ class MainController: ThemedUIViewController {
             }
 
             if !isMagnet {
-                Manager.removeTorrentFile(hash: manager.hash)
+                Core.shared.removeTorrentFile(hash: manager.hash)
 
                 if removeData {
                     do {
-                        try FileManager.default.removeItem(atPath: Manager.rootFolder + "/" + manager.title)
+                        try FileManager.default.removeItem(atPath: Core.rootFolder + "/" + manager.title)
                     } catch {
                         print("MainController: removeTorrent()")
                         print(error.localizedDescription)
@@ -231,11 +231,11 @@ class MainController: ThemedUIViewController {
             let ok = UIAlertAction(title: "OK", style: .default) { _ in
                 let textField = addURLController.textFields![0]
 
-                Utils.checkFolderExist(path: Manager.configFolder)
+                Utils.checkFolderExist(path: Core.configFolder)
 
                 if let url = URL(string: textField.text!) {
-                    Downloader.load(url: url, to: URL(fileURLWithPath: Manager.configFolder + "/_temp.torrent"), completion: {
-                        let hash = String(validatingUTF8: get_torrent_file_hash(Manager.configFolder + "/_temp.torrent"))!
+                    Downloader.load(url: url, to: URL(fileURLWithPath: Core.configFolder + "/_temp.torrent"), completion: {
+                        let hash = String(validatingUTF8: get_torrent_file_hash(Core.configFolder + "/_temp.torrent"))!
                         if hash == "-1" {
                             let controller = ThemedUIAlertController(title: Localize.get("Error has been occured"),
                                                                      message: Localize.get("Torrent file is broken or this URL has some sort of DDOS protection, you can try to open this link in Safari"),
@@ -246,20 +246,20 @@ class MainController: ThemedUIViewController {
                             let close = UIAlertAction(title: NSLocalizedString("Close", comment: ""), style: .cancel)
                             controller.addAction(safari)
                             controller.addAction(close)
-                            UIApplication.shared.keyWindow?.rootViewController?.present(controller, animated: true)
+                            Utils.topViewController?.present(controller, animated: true)
                             return
                         }
-                        if Manager.torrentStates.contains(where: { $0.hash == hash }) {
+                        if Core.shared.torrents[hash] != nil {
                             let controller = ThemedUIAlertController(title: Localize.get("This torrent already exists"),
                                                                      message: "\(Localize.get("Torrent with hash:")) \"\(hash)\" \(Localize.get("already exists in download queue"))",
                                                                      preferredStyle: .alert)
                             let close = UIAlertAction(title: NSLocalizedString("Close", comment: ""), style: .cancel)
                             controller.addAction(close)
-                            UIApplication.shared.keyWindow?.rootViewController?.present(controller, animated: true)
+                            Utils.topViewController?.present(controller, animated: true)
                             return
                         }
                         let controller = UIStoryboard(name: "Main", bundle: Bundle.main).instantiateViewController(withIdentifier: "AddTorrent")
-                        ((controller as? UINavigationController)?.topViewController as? AddTorrentController)?.path = Manager.configFolder + "/_temp.torrent"
+                        ((controller as? UINavigationController)?.topViewController as? AddTorrentController)?.initialize(filePath: Core.configFolder + "/_temp.torrent")
                         self.present(controller, animated: true)
                     }, errorAction: {
                         let alertController = ThemedUIAlertController(title: Localize.get("Error has been occured"),
@@ -297,18 +297,18 @@ class MainController: ThemedUIViewController {
             let ok = UIAlertAction(title: "OK", style: .default) { _ in
                 let textField = addMagnetController.textFields![0]
 
-                Utils.checkFolderExist(path: Manager.configFolder)
-                let hash = String(validatingUTF8: get_magnet_hash(textField.text!))
-                if Manager.torrentStates.contains(where: { $0.hash == hash }) {
+                Utils.checkFolderExist(path: Core.configFolder)
+                if let hash = TorrentSdk.getMagnetHash(magnetUrl: textField.text!),
+                    Core.shared.torrents[hash] != nil {
                     let alert = ThemedUIAlertController(title: Localize.get("This torrent already exists"),
-                                                        message: "\(Localize.get("Torrent with hash:")) \"\(hash ?? "UNKNOWN")\" \(Localize.get("already exists in download queue"))",
+                                                        message: "\(Localize.get("Torrent with hash:")) \"\(hash)\" \(Localize.get("already exists in download queue"))",
                                                         preferredStyle: .alert)
                     let close = UIAlertAction(title: NSLocalizedString("Close", comment: ""), style: .cancel)
                     alert.addAction(close)
                     self.present(alert, animated: true)
                 }
 
-                Manager.addMagnet(textField.text!)
+                Core.shared.addMagnet(textField.text!)
             }
             let cancel = UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel)
 
@@ -410,7 +410,7 @@ class MainController: ThemedUIViewController {
     @IBAction func sortAction(_ sender: UIBarButtonItem) {
         let sortingController = SortingManager.createSortingController(buttonItem: sender, applyChanges: {
             self.managers.removeAll()
-            self.managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Manager.torrentStates, headers: &self.headers))
+            self.managers.append(contentsOf: SortingManager.sortTorrentManagers(managers: Array(Core.shared.torrents.values), headers: &self.headers))
             self.updateFilterQuery()
             self.tableView.reloadData()
         })

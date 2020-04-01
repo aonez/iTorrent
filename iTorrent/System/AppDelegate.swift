@@ -40,7 +40,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
             }
         }
 
-        Manager.initManager()
+        _ = Core.shared
 
         if #available(iOS 13.0, *) {
             Themes.shared.currentUserTheme = window?.traitCollection.userInterfaceStyle.rawValue
@@ -64,7 +64,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
         }
 
         if UserPreferences.ftpKey.value {
-            Manager.startFileSharing()
+            Core.shared.startFileSharing()
         }
 
         return true
@@ -73,10 +73,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         print("Path: " + url.path)
         if url.absoluteString.hasPrefix("magnet:") {
-            Manager.addMagnet(url.absoluteString)
+            Core.shared.addMagnet(url.absoluteString)
         } else {
             openedByFile = true
-            Manager.addTorrentFromFile(url)
+            Core.shared.addTorrentFromFile(url)
         }
 
         return true
@@ -84,7 +84,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         UIApplication.shared.applicationIconBadgeNumber = 0
-        Manager.saveTorrents(filesStatesOnly: BackgroundTask.startBackground())
+        Core.shared.saveTorrents(filesStatesOnly: BackgroundTask.startBackground())
         AppDelegate.backgrounded = true
     }
 
@@ -101,7 +101,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
-        Manager.saveTorrents()
+        Core.shared.saveTorrents()
     }
 
     func splitViewController(_ splitViewController: UISplitViewController, collapseSecondary secondaryViewController: UIViewController, onto primaryViewController: UIViewController) -> Bool {
@@ -162,9 +162,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UISplitViewControllerDele
     @available(iOS 10.0, *)
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         if let hash = response.notification.request.content.userInfo["hash"] as? String {
-            if !Manager.torrentsRestored {
+            if Core.shared.state != .InProgress {
                 DispatchQueue.global(qos: .background).async {
-                    while !Manager.torrentsRestored {
+                    while Core.shared.state != .InProgress {
                         sleep(1)
                     }
                     DispatchQueue.main.async {

@@ -159,14 +159,14 @@ class PreferencesController: StaticTableViewController {
         // FTP
         var ftp = [CellModelProtocol]()
         ftp.append(SwitchCell.ModelProperty(title: "Settings.FTPEnable", property: UserPreferences.ftpKey, hint: Localize.get("Settings.FTPEnable.Hint")) { switcher in
-            switcher.isOn ? Manager.startFileSharing() : Manager.stopFileSharing()
+            switcher.isOn ? Core.shared.startFileSharing() : Core.shared.stopFileSharing()
             self.tableView.reloadSections([3], with: .automatic)
         })
         ftp.append(SegueCell.Model(self, title: "Settings.FTP.Settings", controllerType: PreferencesWebDavController.self))
         data.append(Section(rowModels: ftp, header: "Settings.FTPHeader", footerFunc: { () -> (String) in
             if UserPreferences.ftpKey.value,
                 UserPreferences.webDavWebServerEnabled.value {
-                let addr = Manager.webUploadServer.serverURL // Utils.getWiFiAddress()
+                let addr = Core.shared.webUploadServer.serverURL // Utils.getWiFiAddress()
                 if let addr = addr?.absoluteString {
                     return UserPreferences.ftpKey.value ? Localize.get("Settings.FTP.Message") + addr : ""
                 } else {

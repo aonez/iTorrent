@@ -108,7 +108,7 @@ class TrackersListController: ThemedUIViewController {
         let add = UIAlertAction(title: NSLocalizedString("Add", comment: ""), style: .default) { _ in
             let textField = controller.textFields![0]
 
-            Utils.checkFolderExist(path: Manager.configFolder)
+            Utils.checkFolderExist(path: Core.configFolder)
 
             if let _ = URL(string: textField.text!) {
                 print(add_tracker_to_torrent(self.managerHash, textField.text))

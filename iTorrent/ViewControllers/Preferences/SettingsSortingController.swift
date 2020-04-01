@@ -73,7 +73,7 @@ extension SettingsSortingController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = NSLocalizedString(Utils.TorrentStates(id: data[indexPath.row])?.rawValue ?? "NIL", comment: "")
+        cell.textLabel?.text = NSLocalizedString(TorrentState(id: data[indexPath.row])?.rawValue ?? "NIL", comment: "")
 
         let theme = Themes.current
         cell.textLabel?.textColor = theme.mainText

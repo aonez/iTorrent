@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class ThemedUITableViewController: UITableViewController, Themed {
+class ThemedUITableViewController: SATableViewController, Themed {
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(themeUpdate), name: Themes.updateNotification, object: nil)
